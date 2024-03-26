@@ -29,10 +29,7 @@ def apply_execution_provider_options(execution_providers: List[str], device_id :
 				'cudnn_conv_algo_search': 'EXHAUSTIVE' if use_exhaustive() else 'DEFAULT'
 			}))
 		else:
-			execution_providers_with_options.append((execution_provider,
-			{
-				'device_id': device_id
-			}))
+			execution_providers_with_options.append(execution_provider)
 	return execution_providers_with_options
 
 

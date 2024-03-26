@@ -24,3 +24,9 @@ def get_inference_session(model_path : str) -> InferenceSession:
 def clear_inference_session(model_path : str) -> None:
 	if model_path in INFERENCE_POOL:
 		INFERENCE_POOL[model_path] = {}
+
+
+def clear_device_usage() -> None:
+	global DEVICE_USAGE
+
+	DEVICE_USAGE = {}

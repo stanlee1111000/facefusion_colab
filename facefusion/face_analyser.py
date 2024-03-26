@@ -3,16 +3,15 @@ from time import sleep
 import threading
 import cv2
 import numpy
-import onnxruntime
 
 import facefusion.globals
 from facefusion import process_manager
 from facefusion.common_helper import get_first
 from facefusion.face_helper import estimate_matrix_by_face_landmark_5, warp_face_by_face_landmark_5, warp_face_by_translation, create_static_anchors, distance_to_face_landmark_5, distance_to_bounding_box, convert_face_landmark_68_to_5, apply_nms, categorize_age, categorize_gender
 from facefusion.face_store import get_static_faces, set_static_faces
-from facefusion.execution import apply_execution_provider_options
 from facefusion.download import conditional_download
 from facefusion.filesystem import resolve_relative_path
+from facefusion.inference_pool import get_inference_session
 from facefusion.typing import VisionFrame, Face, FaceSet, FaceAnalyserOrder, FaceAnalyserAge, FaceAnalyserGender, ModelSet, BoundingBox, FaceLandmarkSet, FaceLandmark5, FaceLandmark68, Score, FaceScoreSet, Embedding
 from facefusion.vision import resize_frame_resolution, unpack_resolution
 
@@ -90,24 +89,24 @@ def get_face_analyser() -> Any:
 			sleep(0.5)
 		if FACE_ANALYSER is None:
 			if facefusion.globals.face_detector_model in [ 'many', 'retinaface' ]:
-				face_detectors['retinaface'] = onnxruntime.InferenceSession(MODELS.get('face_detector_retinaface').get('path'), providers = apply_execution_provider_options(facefusion.globals.execution_providers, '0'))
+				face_detectors['retinaface'] = get_inference_session(MODELS.get('face_detector_retinaface').get('path'))
 			if facefusion.globals.face_detector_model in [ 'many', 'scrfd' ]:
-				face_detectors['scrfd'] = onnxruntime.InferenceSession(MODELS.get('face_detector_scrfd').get('path'), providers = apply_execution_provider_options(facefusion.globals.execution_providers, '0'))
+				face_detectors['scrfd'] = get_inference_session(MODELS.get('face_detector_scrfd').get('path'))
 			if facefusion.globals.face_detector_model in [ 'many', 'yoloface' ]:
-				face_detectors['yoloface'] = onnxruntime.InferenceSession(MODELS.get('face_detector_yoloface').get('path'), providers = apply_execution_provider_options(facefusion.globals.execution_providers, '0'))
+				face_detectors['yoloface'] = get_inference_session(MODELS.get('face_detector_yoloface').get('path'))
 			if facefusion.globals.face_detector_model in [ 'yunet' ]:
 				face_detectors['yunet'] = cv2.FaceDetectorYN.create(MODELS.get('face_detector_yunet').get('path'), '', (0, 0))
 			if facefusion.globals.face_recognizer_model == 'arcface_blendswap':
-				face_recognizer = onnxruntime.InferenceSession(MODELS.get('face_recognizer_arcface_blendswap').get('path'), providers = apply_execution_provider_options(facefusion.globals.execution_providers, '0'))
+				face_recognizer = get_inference_session(MODELS.get('face_recognizer_arcface_blendswap').get('path'))
 			if facefusion.globals.face_recognizer_model == 'arcface_inswapper':
-				face_recognizer = onnxruntime.InferenceSession(MODELS.get('face_recognizer_arcface_inswapper').get('path'), providers = apply_execution_provider_options(facefusion.globals.execution_providers, '0'))
+				face_recognizer = get_inference_session(MODELS.get('face_recognizer_arcface_inswapper').get('path'))
 			if facefusion.globals.face_recognizer_model == 'arcface_simswap':
-				face_recognizer = onnxruntime.InferenceSession(MODELS.get('face_recognizer_arcface_simswap').get('path'), providers = apply_execution_provider_options(facefusion.globals.execution_providers, '0'))
+				face_recognizer = get_inference_session(MODELS.get('face_recognizer_arcface_simswap').get('path'))
 			if facefusion.globals.face_recognizer_model == 'arcface_uniface':
-				face_recognizer = onnxruntime.InferenceSession(MODELS.get('face_recognizer_arcface_uniface').get('path'), providers = apply_execution_provider_options(facefusion.globals.execution_providers, '0'))
-			face_landmarkers['68'] = onnxruntime.InferenceSession(MODELS.get('face_landmarker_68').get('path'), providers = apply_execution_provider_options(facefusion.globals.execution_providers, '0'))
-			face_landmarkers['68_5'] = onnxruntime.InferenceSession(MODELS.get('face_landmarker_68_5').get('path'), providers = apply_execution_provider_options(facefusion.globals.execution_providers, '0'))
-			gender_age = onnxruntime.InferenceSession(MODELS.get('gender_age').get('path'), providers = apply_execution_provider_options(facefusion.globals.execution_providers, '0'))
+				face_recognizer = get_inference_session(MODELS.get('face_recognizer_arcface_uniface').get('path'))
+			face_landmarkers['68'] = get_inference_session(MODELS.get('face_landmarker_68').get('path'))
+			face_landmarkers['68_5'] = get_inference_session(MODELS.get('face_landmarker_68_5').get('path'))
+			gender_age = get_inference_session(MODELS.get('gender_age').get('path'))
 			FACE_ANALYSER =\
 			{
 				'face_detectors': face_detectors,

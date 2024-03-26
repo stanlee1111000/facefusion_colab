@@ -21,6 +21,7 @@ def before_all() -> None:
 
 @pytest.fixture(autouse = True)
 def before_each() -> None:
+	facefusion.globals.execution_devices = '0'
 	facefusion.globals.face_detector_score = 0.5
 	facefusion.globals.face_landmarker_score = 0.5
 	facefusion.globals.face_recognizer_model = 'arcface_inswapper'

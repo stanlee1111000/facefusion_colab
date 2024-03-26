@@ -16,7 +16,7 @@ from facefusion.face_helper import warp_face_by_face_landmark_5, paste_back
 from facefusion.face_store import get_reference_faces
 from facefusion.common_helper import extract_major_version
 from facefusion.content_analyser import clear_content_analyser
-from facefusion.inference_pool import get_inference_session, clear_inference_session
+from facefusion.inference_pool import get_inference_session, clear_inference_session, clear_device_usage
 from facefusion.normalizer import normalize_output_path
 from facefusion.typing import Face, Embedding, VisionFrame, UpdateProcess, ProcessMode, ModelSet, OptionsWithModel, QueuePayload
 from facefusion.filesystem import is_file, is_image, has_image, is_video, filter_image_paths, resolve_relative_path
@@ -208,6 +208,7 @@ def pre_process(mode : ProcessMode) -> bool:
 
 def post_process() -> None:
 	read_static_image.cache_clear()
+	clear_device_usage()
 	if facefusion.globals.video_memory_strategy == 'strict' or facefusion.globals.video_memory_strategy == 'moderate':
 		clear_frame_processor()
 		clear_model_matrix()

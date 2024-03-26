@@ -1,17 +1,15 @@
 from typing import Any, List, Literal, Optional
 from argparse import ArgumentParser
 from time import sleep
-import threading
 import cv2
 import numpy
-import onnxruntime
 
 import facefusion.globals
 import facefusion.processors.frame.core as frame_processors
 from facefusion import config, process_manager, logger, wording
 from facefusion.face_analyser import clear_face_analyser
 from facefusion.content_analyser import clear_content_analyser
-from facefusion.execution import apply_execution_provider_options
+from facefusion.inference_pool import get_inference_session, clear_inference_session, clear_device_usage
 from facefusion.normalizer import normalize_output_path
 from facefusion.typing import Face, VisionFrame, UpdateProcess, ProcessMode, ModelSet, OptionsWithModel, QueuePayload
 from facefusion.common_helper import create_metavar
@@ -22,8 +20,6 @@ from facefusion.processors.frame.typings import FrameEnhancerInputs
 from facefusion.processors.frame import globals as frame_processors_globals
 from facefusion.processors.frame import choices as frame_processors_choices
 
-FRAME_PROCESSOR = None
-THREAD_LOCK : threading.Lock = threading.Lock()
 NAME = __name__.upper()
 MODELS : ModelSet =\
 {
@@ -74,21 +70,15 @@ OPTIONS : Optional[OptionsWithModel] = None
 
 
 def get_frame_processor() -> Any:
-	global FRAME_PROCESSOR
-
-	with THREAD_LOCK:
-		while process_manager.is_checking():
-			sleep(0.5)
-		if FRAME_PROCESSOR is None:
-			model_path = get_options('model').get('path')
-			FRAME_PROCESSOR = onnxruntime.InferenceSession(model_path, providers = apply_execution_provider_options(facefusion.globals.execution_providers, '0'))
-	return FRAME_PROCESSOR
+	while process_manager.is_checking():
+		sleep(0.5)
+	model_path = get_options('model').get('path')
+	return get_inference_session(model_path)
 
 
 def clear_frame_processor() -> None:
-	global FRAME_PROCESSOR
-
-	FRAME_PROCESSOR = None
+	model_path = get_options('model').get('path')
+	clear_inference_session(model_path)
 
 
 def get_options(key : Literal['model']) -> Any:
@@ -153,6 +143,7 @@ def pre_process(mode : ProcessMode) -> bool:
 
 def post_process() -> None:
 	read_static_image.cache_clear()
+	clear_device_usage()
 	if facefusion.globals.video_memory_strategy == 'strict' or facefusion.globals.video_memory_strategy == 'moderate':
 		clear_frame_processor()
 	if facefusion.globals.video_memory_strategy == 'strict':

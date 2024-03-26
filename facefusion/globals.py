@@ -13,6 +13,7 @@ headless : Optional[bool] = None
 log_level : Optional[LogLevel] = None
 # execution
 execution_providers : List[str] = []
+execution_devices : List[str] = []
 execution_thread_count : Optional[int] = None
 execution_queue_count : Optional[int] = None
 # memory

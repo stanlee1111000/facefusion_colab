@@ -51,7 +51,7 @@ def get_face_occluder() -> Any:
 	with THREAD_LOCK:
 		if FACE_OCCLUDER is None:
 			model_path = MODELS.get('face_occluder').get('path')
-			FACE_OCCLUDER = onnxruntime.InferenceSession(model_path, providers = apply_execution_provider_options(facefusion.globals.execution_providers))
+			FACE_OCCLUDER = onnxruntime.InferenceSession(model_path, providers = apply_execution_provider_options(facefusion.globals.execution_providers, '0'))
 	return FACE_OCCLUDER
 
 
@@ -63,7 +63,7 @@ def get_face_parser() -> Any:
 			sleep(0.5)
 		if FACE_PARSER is None:
 			model_path = MODELS.get('face_parser').get('path')
-			FACE_PARSER = onnxruntime.InferenceSession(model_path, providers = apply_execution_provider_options(facefusion.globals.execution_providers))
+			FACE_PARSER = onnxruntime.InferenceSession(model_path, providers = apply_execution_provider_options(facefusion.globals.execution_providers, '0'))
 	return FACE_PARSER
 
 

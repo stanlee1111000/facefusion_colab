@@ -64,6 +64,7 @@ WORDING : Dict[str, Any] =\
 		'log_level': 'adjust the message severity displayed in the terminal',
 		# execution
 		'execution_providers': 'accelerate the model inference using different providers (choices: {choices}, ...)',
+		'execution_devices': 'balance the model inference between different devices',
 		'execution_thread_count': 'specify the amount of parallel threads while processing',
 		'execution_queue_count': 'specify the amount of frames each thread is processing',
 		# memory
@@ -130,6 +131,7 @@ WORDING : Dict[str, Any] =\
 		'common_options_checkbox_group': 'OPTIONS',
 		# execution
 		'execution_providers_checkbox_group': 'EXECUTION PROVIDERS',
+		'execution_devices_checkbox_group': 'EXECUTION DEVICES',
 		# execution queue count
 		'execution_queue_count_slider': 'EXECUTION QUEUE COUNT',
 		# execution thread count

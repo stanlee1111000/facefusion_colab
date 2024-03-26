@@ -1,6 +1,7 @@
 from typing import Any, Literal, Callable, List, Tuple, Dict, TypedDict
 from collections import namedtuple
 import numpy
+from onnxruntime import InferenceSession
 
 BoundingBox = numpy.ndarray[Any, Any]
 FaceLandmark5 = numpy.ndarray[Any, Any]
@@ -58,6 +59,9 @@ QueuePayload = TypedDict('QueuePayload',
 })
 UpdateProcess = Callable[[], None]
 ProcessFrames = Callable[[List[str], List[QueuePayload], UpdateProcess], None]
+
+InferenceSet = Dict['str', InferenceSession]
+InferencePool = Dict['str', InferenceSet]
 
 WarpTemplate = Literal['arcface_112_v1', 'arcface_112_v2', 'arcface_128_v2', 'ffhq_512']
 WarpTemplateSet = Dict[WarpTemplate, numpy.ndarray[Any, Any]]

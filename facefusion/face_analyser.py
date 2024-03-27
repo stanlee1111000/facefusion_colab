@@ -11,13 +11,11 @@ from facefusion.face_helper import estimate_matrix_by_face_landmark_5, warp_face
 from facefusion.face_store import get_static_faces, set_static_faces
 from facefusion.download import conditional_download
 from facefusion.filesystem import resolve_relative_path
-from facefusion.inference_pool import get_inference_session
+from facefusion.inference_pool import get_inference_session, clear_inference_session
 from facefusion.typing import VisionFrame, Face, FaceSet, FaceAnalyserOrder, FaceAnalyserAge, FaceAnalyserGender, ModelSet, BoundingBox, FaceLandmarkSet, FaceLandmark5, FaceLandmark68, Score, FaceScoreSet, Embedding
 from facefusion.vision import resize_frame_resolution, unpack_resolution
 
-FACE_ANALYSER = None
 THREAD_SEMAPHORE : threading.Semaphore = threading.Semaphore()
-THREAD_LOCK : threading.Lock = threading.Lock()
 MODELS : ModelSet =\
 {
 	'face_detector_retinaface':
@@ -79,48 +77,52 @@ MODELS : ModelSet =\
 
 
 def get_face_analyser() -> Any:
-	global FACE_ANALYSER
-
 	face_detectors = {}
 	face_landmarkers = {}
 
-	with THREAD_LOCK:
-		while process_manager.is_checking():
-			sleep(0.5)
-		if FACE_ANALYSER is None:
-			if facefusion.globals.face_detector_model in [ 'many', 'retinaface' ]:
-				face_detectors['retinaface'] = get_inference_session(MODELS.get('face_detector_retinaface').get('path'))
-			if facefusion.globals.face_detector_model in [ 'many', 'scrfd' ]:
-				face_detectors['scrfd'] = get_inference_session(MODELS.get('face_detector_scrfd').get('path'))
-			if facefusion.globals.face_detector_model in [ 'many', 'yoloface' ]:
-				face_detectors['yoloface'] = get_inference_session(MODELS.get('face_detector_yoloface').get('path'))
-			if facefusion.globals.face_detector_model in [ 'yunet' ]:
-				face_detectors['yunet'] = cv2.FaceDetectorYN.create(MODELS.get('face_detector_yunet').get('path'), '', (0, 0))
-			if facefusion.globals.face_recognizer_model == 'arcface_blendswap':
-				face_recognizer = get_inference_session(MODELS.get('face_recognizer_arcface_blendswap').get('path'))
-			if facefusion.globals.face_recognizer_model == 'arcface_inswapper':
-				face_recognizer = get_inference_session(MODELS.get('face_recognizer_arcface_inswapper').get('path'))
-			if facefusion.globals.face_recognizer_model == 'arcface_simswap':
-				face_recognizer = get_inference_session(MODELS.get('face_recognizer_arcface_simswap').get('path'))
-			if facefusion.globals.face_recognizer_model == 'arcface_uniface':
-				face_recognizer = get_inference_session(MODELS.get('face_recognizer_arcface_uniface').get('path'))
-			face_landmarkers['68'] = get_inference_session(MODELS.get('face_landmarker_68').get('path'))
-			face_landmarkers['68_5'] = get_inference_session(MODELS.get('face_landmarker_68_5').get('path'))
-			gender_age = get_inference_session(MODELS.get('gender_age').get('path'))
-			FACE_ANALYSER =\
-			{
-				'face_detectors': face_detectors,
-				'face_recognizer': face_recognizer,
-				'face_landmarkers': face_landmarkers,
-				'gender_age': gender_age
-			}
-	return FACE_ANALYSER
+	while process_manager.is_checking():
+		sleep(0.5)
+	if facefusion.globals.face_detector_model in [ 'many', 'retinaface' ]:
+		face_detectors['retinaface'] = get_inference_session(MODELS.get('face_detector_retinaface').get('path'))
+	if facefusion.globals.face_detector_model in [ 'many', 'scrfd' ]:
+		face_detectors['scrfd'] = get_inference_session(MODELS.get('face_detector_scrfd').get('path'))
+	if facefusion.globals.face_detector_model in [ 'many', 'yoloface' ]:
+		face_detectors['yoloface'] = get_inference_session(MODELS.get('face_detector_yoloface').get('path'))
+	if facefusion.globals.face_detector_model in [ 'yunet' ]:
+		face_detectors['yunet'] = cv2.FaceDetectorYN.create(MODELS.get('face_detector_yunet').get('path'), '', (0, 0))
+	if facefusion.globals.face_recognizer_model == 'arcface_blendswap':
+		face_recognizer = get_inference_session(MODELS.get('face_recognizer_arcface_blendswap').get('path'))
+	if facefusion.globals.face_recognizer_model == 'arcface_inswapper':
+		face_recognizer = get_inference_session(MODELS.get('face_recognizer_arcface_inswapper').get('path'))
+	if facefusion.globals.face_recognizer_model == 'arcface_simswap':
+		face_recognizer = get_inference_session(MODELS.get('face_recognizer_arcface_simswap').get('path'))
+	if facefusion.globals.face_recognizer_model == 'arcface_uniface':
+		face_recognizer = get_inference_session(MODELS.get('face_recognizer_arcface_uniface').get('path'))
+	face_landmarkers['68'] = get_inference_session(MODELS.get('face_landmarker_68').get('path'))
+	face_landmarkers['68_5'] = get_inference_session(MODELS.get('face_landmarker_68_5').get('path'))
+	gender_age = get_inference_session(MODELS.get('gender_age').get('path'))
+	face_analyser =\
+	{
+		'face_detectors': face_detectors,
+		'face_recognizer': face_recognizer,
+		'face_landmarkers': face_landmarkers,
+		'gender_age': gender_age
+	}
+	return face_analyser
 
 
 def clear_face_analyser() -> Any:
-	global FACE_ANALYSER
-
-	FACE_ANALYSER = None
+	clear_inference_session(MODELS.get('face_detector_retinaface').get('path'))
+	clear_inference_session(MODELS.get('face_detector_scrfd').get('path'))
+	clear_inference_session(MODELS.get('face_detector_yoloface').get('path'))
+	clear_inference_session(MODELS.get('face_detector_yunet').get('path'))
+	clear_inference_session(MODELS.get('face_recognizer_arcface_blendswap').get('path'))
+	clear_inference_session(MODELS.get('face_recognizer_arcface_inswapper').get('path'))
+	clear_inference_session(MODELS.get('face_recognizer_arcface_simswap').get('path'))
+	clear_inference_session(MODELS.get('face_recognizer_arcface_uniface').get('path'))
+	clear_inference_session(MODELS.get('face_landmarker_68').get('path'))
+	clear_inference_session(MODELS.get('face_landmarker_68_5').get('path'))
+	clear_inference_session(MODELS.get('gender_age').get('path'))
 
 
 def pre_check() -> bool:

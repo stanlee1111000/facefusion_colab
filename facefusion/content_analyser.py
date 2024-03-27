@@ -1,7 +1,6 @@
 from typing import Any
 from functools import lru_cache
 from time import sleep
-import threading
 import cv2
 import numpy
 from tqdm import tqdm

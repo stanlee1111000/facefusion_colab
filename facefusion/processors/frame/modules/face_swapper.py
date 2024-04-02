@@ -27,7 +27,7 @@ from facefusion.processors.frame import globals as frame_processors_globals
 from facefusion.processors.frame import choices as frame_processors_choices
 
 FRAME_PROCESSOR = None
-MODEL_MATRIX = None
+MODEL_INITIALIZER = None
 THREAD_LOCK : threading.Lock = threading.Lock()
 NAME = __name__.upper()
 MODELS : ModelSet =\
@@ -114,23 +114,23 @@ def clear_frame_processor() -> None:
 	FRAME_PROCESSOR = None
 
 
-def get_model_matrix() -> Any:
-	global MODEL_MATRIX
+def get_model_initializer() -> Any:
+	global MODEL_INITIALIZER
 
 	with THREAD_LOCK:
 		while process_manager.is_checking():
 			sleep(0.5)
-		if MODEL_MATRIX is None:
+		if MODEL_INITIALIZER is None:
 			model_path = get_options('model').get('path')
 			model = onnx.load(model_path)
-			MODEL_MATRIX = numpy_helper.to_array(model.graph.initializer[-1])
-	return MODEL_MATRIX
+			MODEL_INITIALIZER = numpy_helper.to_array(model.graph.initializer[-1])
+	return MODEL_INITIALIZER
 
 
-def clear_model_matrix() -> None:
-	global MODEL_MATRIX
+def clear_model_initializer() -> None:
+	global MODEL_INITIALIZER
 
-	MODEL_MATRIX = None
+	MODEL_INITIALIZER = None
 
 
 def get_options(key : Literal['model']) -> Any:
@@ -173,22 +173,25 @@ def apply_args(program : ArgumentParser) -> None:
 
 
 def pre_check() -> bool:
+	download_directory_path = resolve_relative_path('../.assets/models')
+	model_url = get_options('model').get('url')
+	model_path = get_options('model').get('path')
+
 	if not facefusion.globals.skip_download:
-		download_directory_path = resolve_relative_path('../.assets/models')
-		model_url = get_options('model').get('url')
 		process_manager.check()
 		conditional_download(download_directory_path, [ model_url ])
 		process_manager.end()
-	return True
+	return is_file(model_path)
 
 
 def post_check() -> bool:
 	model_url = get_options('model').get('url')
 	model_path = get_options('model').get('path')
+
 	if not facefusion.globals.skip_download and not is_download_done(model_url, model_path):
 		logger.error(wording.get('model_download_not_done') + wording.get('exclamation_mark'), NAME)
 		return False
-	elif not is_file(model_path):
+	if not is_file(model_path):
 		logger.error(wording.get('model_file_not_present') + wording.get('exclamation_mark'), NAME)
 		return False
 	return True
@@ -217,7 +220,7 @@ def post_process() -> None:
 	read_static_image.cache_clear()
 	if facefusion.globals.video_memory_strategy == 'strict' or facefusion.globals.video_memory_strategy == 'moderate':
 		clear_frame_processor()
-		clear_model_matrix()
+		clear_model_initializer()
 	if facefusion.globals.video_memory_strategy == 'strict':
 		clear_face_analyser()
 		clear_content_analyser()
@@ -281,7 +284,7 @@ def prepare_source_frame(source_face : Face) -> VisionFrame:
 def prepare_source_embedding(source_face : Face) -> Embedding:
 	model_type = get_options('model').get('type')
 	if model_type == 'inswapper':
-		model_matrix = get_model_matrix()
+		model_matrix = get_model_initializer()
 		source_embedding = source_face.embedding.reshape((1, -1))
 		source_embedding = numpy.dot(source_embedding, model_matrix) / numpy.linalg.norm(source_embedding)
 	else:

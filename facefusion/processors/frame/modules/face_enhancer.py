@@ -73,6 +73,20 @@ MODELS : ModelSet =\
 		'template': 'ffhq_512',
 		'size': (512, 512)
 	},
+	'gpen_bfr_1024':
+	{
+		'url': 'https://github.com/facefusion/facefusion-assets/releases/download/models/gpen_bfr_1024.onnx',
+		'path': resolve_relative_path('../.assets/models/gpen_bfr_1024.onnx'),
+		'template': 'ffhq_512',
+		'size': (1024, 1024)
+	},
+	'gpen_bfr_2048':
+	{
+		'url': 'https://github.com/facefusion/facefusion-assets/releases/download/models/gpen_bfr_2048.onnx',
+		'path': resolve_relative_path('../.assets/models/gpen_bfr_2048.onnx'),
+		'template': 'ffhq_512',
+		'size': (2048, 2048)
+	},
 	'restoreformer_plus_plus':
 	{
 		'url': 'https://github.com/facefusion/facefusion-assets/releases/download/models/restoreformer_plus_plus.onnx',
@@ -131,22 +145,25 @@ def apply_args(program : ArgumentParser) -> None:
 
 
 def pre_check() -> bool:
+	download_directory_path = resolve_relative_path('../.assets/models')
+	model_url = get_options('model').get('url')
+	model_path = get_options('model').get('path')
+
 	if not facefusion.globals.skip_download:
-		download_directory_path = resolve_relative_path('../.assets/models')
-		model_url = get_options('model').get('url')
 		process_manager.check()
 		conditional_download(download_directory_path, [ model_url ])
 		process_manager.end()
-	return True
+	return is_file(model_path)
 
 
 def post_check() -> bool:
 	model_url = get_options('model').get('url')
 	model_path = get_options('model').get('path')
+
 	if not facefusion.globals.skip_download and not is_download_done(model_url, model_path):
 		logger.error(wording.get('model_download_not_done') + wording.get('exclamation_mark'), NAME)
 		return False
-	elif not is_file(model_path):
+	if not is_file(model_path):
 		logger.error(wording.get('model_file_not_present') + wording.get('exclamation_mark'), NAME)
 		return False
 	return True
@@ -202,7 +219,7 @@ def apply_enhance(crop_vision_frame : VisionFrame) -> VisionFrame:
 		if frame_processor_input.name == 'input':
 			frame_processor_inputs[frame_processor_input.name] = crop_vision_frame
 		if frame_processor_input.name == 'weight':
-			weight = numpy.array([ 1 ], dtype = numpy.double)
+			weight = numpy.array([ 1 ]).astype(numpy.double)
 			frame_processor_inputs[frame_processor_input.name] = weight
 	with THREAD_SEMAPHORE:
 		crop_vision_frame = frame_processor.run(None, frame_processor_inputs)[0][0]

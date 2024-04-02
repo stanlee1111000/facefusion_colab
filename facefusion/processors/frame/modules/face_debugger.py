@@ -11,6 +11,7 @@ from facefusion.face_masker import create_static_box_mask, create_occlusion_mask
 from facefusion.face_helper import warp_face_by_face_landmark_5, categorize_age, categorize_gender
 from facefusion.face_store import get_reference_faces
 from facefusion.content_analyser import clear_content_analyser
+from facefusion.inference_pool import clear_device_usage
 from facefusion.typing import Face, VisionFrame, UpdateProcess, ProcessMode, QueuePayload
 from facefusion.vision import read_image, read_static_image, write_image
 from facefusion.processors.frame.typings import FaceDebuggerInputs
@@ -58,6 +59,7 @@ def pre_process(mode : ProcessMode) -> bool:
 
 def post_process() -> None:
 	read_static_image.cache_clear()
+	clear_device_usage()
 	if facefusion.globals.video_memory_strategy == 'strict' or facefusion.globals.video_memory_strategy == 'moderate':
 		clear_frame_processor()
 	if facefusion.globals.video_memory_strategy == 'strict':
@@ -74,6 +76,7 @@ def debug_face(target_face : Face, temp_vision_frame : VisionFrame) -> VisionFra
 	bounding_box = target_face.bounding_box.astype(numpy.int32)
 	temp_vision_frame = temp_vision_frame.copy()
 	has_face_landmark_5_fallback = numpy.array_equal(target_face.landmarks.get('5'), target_face.landmarks.get('5/68'))
+	has_face_landmark_68_fallback = numpy.array_equal(target_face.landmarks.get('68'), target_face.landmarks.get('68/5'))
 
 	if 'bounding-box' in frame_processors_globals.face_debugger_items:
 		cv2.rectangle(temp_vision_frame, (bounding_box[0], bounding_box[1]), (bounding_box[2], bounding_box[3]), primary_color, 2)
@@ -109,7 +112,11 @@ def debug_face(target_face : Face, temp_vision_frame : VisionFrame) -> VisionFra
 	if 'face-landmark-68' in frame_processors_globals.face_debugger_items and numpy.any(target_face.landmarks.get('68')):
 		face_landmark_68 = target_face.landmarks.get('68').astype(numpy.int32)
 		for index in range(face_landmark_68.shape[0]):
-			cv2.circle(temp_vision_frame, (face_landmark_68[index][0], face_landmark_68[index][1]), 3, secondary_color, -1)
+			cv2.circle(temp_vision_frame, (face_landmark_68[index][0], face_landmark_68[index][1]), 3, tertiary_color if has_face_landmark_68_fallback else secondary_color, -1)
+	if 'face-landmark-68/5' in frame_processors_globals.face_debugger_items and numpy.any(target_face.landmarks.get('68')):
+		face_landmark_68 = target_face.landmarks.get('68/5').astype(numpy.int32)
+		for index in range(face_landmark_68.shape[0]):
+			cv2.circle(temp_vision_frame, (face_landmark_68[index][0], face_landmark_68[index][1]), 3, primary_color, -1)
 	if bounding_box[3] - bounding_box[1] > 50 and bounding_box[2] - bounding_box[0] > 50:
 		top = bounding_box[1]
 		left = bounding_box[0] - 20

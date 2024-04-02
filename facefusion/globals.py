@@ -7,11 +7,13 @@ source_paths : Optional[List[str]] = None
 target_path : Optional[str] = None
 output_path : Optional[str] = None
 # misc
+force_download : Optional[bool] = None
 skip_download : Optional[bool] = None
 headless : Optional[bool] = None
 log_level : Optional[LogLevel] = None
 # execution
 execution_providers : List[str] = []
+execution_devices : List[str] = []
 execution_thread_count : Optional[int] = None
 execution_queue_count : Optional[int] = None
 # memory

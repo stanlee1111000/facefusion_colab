@@ -43,9 +43,14 @@ WARP_TEMPLATES : WarpTemplateSet =\
 }
 
 
-def warp_face_by_face_landmark_5(temp_vision_frame : VisionFrame, face_landmark_5 : FaceLandmark5, warp_template : WarpTemplate, crop_size : Size) -> Tuple[VisionFrame, Matrix]:
+def estimate_matrix_by_face_landmark_5(face_landmark_5 : FaceLandmark5, warp_template : WarpTemplate, crop_size : Size) -> Matrix:
 	normed_warp_template = WARP_TEMPLATES.get(warp_template) * crop_size
 	affine_matrix = cv2.estimateAffinePartial2D(face_landmark_5, normed_warp_template, method = cv2.RANSAC, ransacReprojThreshold = 100)[0]
+	return affine_matrix
+
+
+def warp_face_by_face_landmark_5(temp_vision_frame : VisionFrame, face_landmark_5 : FaceLandmark5, warp_template : WarpTemplate, crop_size : Size) -> Tuple[VisionFrame, Matrix]:
+	affine_matrix = estimate_matrix_by_face_landmark_5(face_landmark_5, warp_template, crop_size)
 	crop_vision_frame = cv2.warpAffine(temp_vision_frame, affine_matrix, crop_size, borderMode = cv2.BORDER_REPLICATE, flags = cv2.INTER_AREA)
 	return crop_vision_frame, affine_matrix
 
@@ -112,14 +117,14 @@ def distance_to_face_landmark_5(points : numpy.ndarray[Any, Any], distance : num
 	return face_landmark_5
 
 
-def convert_face_landmark_68_to_5(landmark_68 : FaceLandmark68) -> FaceLandmark5:
+def convert_face_landmark_68_to_5(face_landmark_68 : FaceLandmark68) -> FaceLandmark5:
 	face_landmark_5 = numpy.array(
 	[
-		numpy.mean(landmark_68[36:42], axis = 0),
-		numpy.mean(landmark_68[42:48], axis = 0),
-		landmark_68[30],
-		landmark_68[48],
-		landmark_68[54]
+		numpy.mean(face_landmark_68[36:42], axis = 0),
+		numpy.mean(face_landmark_68[42:48], axis = 0),
+		face_landmark_68[30],
+		face_landmark_68[48],
+		face_landmark_68[54]
 	])
 	return face_landmark_5
 
